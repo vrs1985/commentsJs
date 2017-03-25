@@ -77,9 +77,12 @@ function AppModel() {
     let name = document.getElementById('comment.name');
     let msg = document.getElementById('comment.message');
     let date = Date.now();
-    let error = this.checkKeyWord(name.value);
-    if(error === 'error')
-      return error;
+    if(this.checkKeyWord(name.value) === 'error'){
+      return 'error';
+    }else if(this.checkInput(name.value) === 'empty')
+      return 'empty';
+    if(this.checkInput(msg.value) === 'empty')
+      return 'empty';
     let value = [name.value, date, msg.value];
     this.setItem(value);
     name.value='', msg.value='';
@@ -88,9 +91,13 @@ function AppModel() {
 
   this.checkKeyWord = (str)=>{
     let reg = /(admin)/gi;
-    if ( str.length < 2 || str === undefined || str === null || reg.test(str))
+    if (reg.test(str))
       return 'error';
     };
+  this.checkInput = (str) => {
+    if(str.length < 2 || str === undefined || str === null )
+      return 'empty';
+  };
 
 this.init();
 }
@@ -102,6 +109,7 @@ function AppView(model) {
   this.form = document.getElementById('addComment');
   this.commCount = document.getElementById('commCount');
   this.error = `Please change name`;
+  this.empty = `Please fill input field`;
   this.allComment = this.model.concateComments();
   this.init = () =>{
     this.start();
@@ -123,11 +131,17 @@ function AppView(model) {
 
   this.drawErr = (msg)=>{
     let firstElem = this.form.firstChild.className;
-    if( firstElem === 'error')
+    if( firstElem === 'error'){
+      if(msg === 'error'){
+        this.form.firstChild.innerHTML = this.error;
+      }else if(msg === 'empty'){
+        this.form.firstChild.innerHTML = this.empty;
+      }
       return;
+    }
     let err = document.createElement('div');
     err.classList.add('error');
-    err.innerHTML = this.error;
+    err.innerHTML = (msg === 'error')? this.error : this.empty;
     this.form.prepend(err);
   };
 
@@ -162,7 +176,9 @@ function AppCtrl(model, view) {
 
   this.addComment = ()=>{
     let message = this.model.getValue();
-    if(message === 'error')
+    if(message === 'error'){
+      return this.view.drawErr(message);
+    }else if(message === 'empty')
       return this.view.drawErr(message);
     this.view.changeCount(++this.model.commentCount);
     this.view.drawComment(message);
